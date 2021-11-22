@@ -28,10 +28,10 @@ from features import get_features_generator, get_available_features_generators
 def parse_args():
     parser = ArgumentParser()
     # data
-    parser.add_argument('--data_path', type=str, default='datachem/NBHtrain.csv', choices=['datachem/ZhangDDI_train.csv', 'datachem/ChChMiner_train.csv', 'datachem/DeepDDI_train.csv'])
-    parser.add_argument('--separate_val_path', type=str, default='datachem/NBHval.csv', choices=['datachem/ZhangDDI_valid.csv', 'datachem/ChChMiner_valid.csv', 'datachem/DeepDDI_valid.csv'])
-    parser.add_argument('--separate_test_path', type=str, default='datachem/NBHtest.csv', choices=['datachem/ZhangDDI_test.csv', 'datachem/ChChMiner_test.csv', 'datachem/DeepDDI_test.csv'])
-    parser.add_argument('--vocab_path', type=str, default='datachem/NBHList.csv', choices=['datachem/drug_list_zhang.csv', 'datachem/drug_list_miner.csv', 'datachem/drug_list_deep.csv'])
+    parser.add_argument('--data_path', type=str, default='datachem/ZhangDDI_train.csv', choices=['datachem/ZhangDDI_train.csv', 'datachem/ChChMiner_train.csv', 'datachem/DeepDDI_train.csv'])
+    parser.add_argument('--separate_val_path', type=str, default='datachem/ZhangDDI_valid.csv', choices=['datachem/ZhangDDI_valid.csv', 'datachem/ChChMiner_valid.csv', 'datachem/DeepDDI_valid.csv'])
+    parser.add_argument('--separate_test_path', type=str, default='datachem/ZhangDDI_test.csv', choices=['datachem/ZhangDDI_test.csv', 'datachem/ChChMiner_test.csv', 'datachem/DeepDDI_test.csv'])
+    parser.add_argument('--vocab_path', type=str, default='datachem/drug_list_zhang.csv', choices=['datachem/drug_list_zhang.csv', 'datachem/drug_list_miner.csv', 'datachem/drug_list_deep.csv'])
 
     # training
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Initial learning rate.')
