@@ -28,10 +28,10 @@ from features import get_features_generator, get_available_features_generators
 def parse_args():
     parser = ArgumentParser()
     # data
-    parser.add_argument('--data_path', type=str, default='datachem/ZhangDDI_train.csv', choices=['datachem/ZhangDDI_train.csv', 'datachem/ChChMiner_train.csv', 'datachem/DeepDDI_train.csv'])
-    parser.add_argument('--separate_val_path', type=str, default='datachem/ZhangDDI_valid.csv', choices=['datachem/ZhangDDI_valid.csv', 'datachem/ChChMiner_valid.csv', 'datachem/DeepDDI_valid.csv'])
-    parser.add_argument('--separate_test_path', type=str, default='datachem/ZhangDDI_test.csv', choices=['datachem/ZhangDDI_test.csv', 'datachem/ChChMiner_test.csv', 'datachem/DeepDDI_test.csv'])
-    parser.add_argument('--vocab_path', type=str, default='datachem/drug_list_zhang.csv', choices=['datachem/drug_list_zhang.csv', 'datachem/drug_list_miner.csv', 'datachem/drug_list_deep.csv'])
+    parser.add_argument('--data_path', type=str, default='datachem/NBHtrain.csv', choices=['datachem/ZhangDDI_train.csv', 'datachem/ChChMiner_train.csv', 'datachem/DeepDDI_train.csv'])
+    parser.add_argument('--separate_val_path', type=str, default='datachem/NBHval.csv', choices=['datachem/ZhangDDI_valid.csv', 'datachem/ChChMiner_valid.csv', 'datachem/DeepDDI_valid.csv'])
+    parser.add_argument('--separate_test_path', type=str, default='datachem/NBHtest.csv', choices=['datachem/ZhangDDI_test.csv', 'datachem/ChChMiner_test.csv', 'datachem/DeepDDI_test.csv'])
+    parser.add_argument('--vocab_path', type=str, default='datachem/NBHList.csv', choices=['datachem/drug_list_zhang.csv', 'datachem/drug_list_miner.csv', 'datachem/drug_list_deep.csv'])
 
     # training
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Initial learning rate.')
@@ -246,24 +246,20 @@ def main():
     args.features_nonzero = features_nonzero
 
     # input for model
-    adj_orig = adj - sp.dia_matrix((adj.diagonal()[np.newaxis, :], [0]), shape=adj.shape)
-    adj_orig.eliminate_zeros()
-    adj = adj_train
-
-    num_edges_w = adj.sum()
-    num_nodes_w = adj.shape[0]
+    num_edges_w = adj_train.sum()
+    num_nodes_w = adj_train.shape[0]
     args.num_edges_w = num_edges_w
     pos_weight = float(num_nodes_w ** 2 - num_edges_w) / num_edges_w
 
     adj_tensor = torch.FloatTensor(adj.toarray())
-    drug_nums = adj.toarray().shape[0]
+    drug_nums = adj_train.toarray().shape[0]
     args.drug_nums = drug_nums
 
-    adj_norm = normalize_adj(adj)
+    adj_norm = normalize_adj(adj_train)
 
     adj_label = adj_train
     adj_mask = pos_weight * adj_train.toarray() + adj_train_false.toarray()
-    adj_mask_un = adj.toarray() - adj_train.toarray() - adj_train_false.toarray()
+    adj_mask_un = (np.ones((drug_nums, drug_nums)) - adj_train.toarray() - adj_train_false.toarray()) / pos_weight
     adj_mask = torch.flatten(torch.Tensor(adj_mask))
     adj_mask_un = torch.flatten(torch.Tensor(adj_mask_un))
 
@@ -303,17 +299,16 @@ def main():
         model.train()
         optimizer.zero_grad()
 
-        preds, feat, embed, re_feat, re_embed, DGI_loss = model(features, adj_norm, adj_tensor, drug_nums)
+        preds, re_feat, DGI_loss = model(features, adj_norm, adj_tensor, drug_nums)
         labels = adj_label.to_dense().view(-1)
 
-        re_embed_pos = torch.log(re_embed)
         BCEloss = torch.mean(loss_function_BCE(preds, labels) * adj_mask)
         BCEloss += torch.mean(loss_function_BCE(re_feat, labels) * adj_mask)
-        KLloss = torch.mean(loss_function_KL(re_embed_pos, re_feat) * adj_mask)
+        KLloss = torch.mean(loss_function_KL(preds, re_feat) * adj_mask_un)
 
         avg_cost = args.alpha_loss * BCEloss + args.beta_loss * KLloss + args.gamma_loss * DGI_loss
         roc_curr, ap_curr, f1_curr, acc_score = get_roc_score(
-            model, features, adj_norm, adj_orig, adj_tensor, drug_nums, val_edges, val_edges_false
+            model, features, adj_norm, adj_tensor, drug_nums, val_edges, val_edges_false
         )
 
         logger.info('Epoch: {} train_loss= {:.5f} val_roc= {:.5f} val_ap= {:.5f}, val_f1= {:.5f}, val_acc={:.5f}, time= {:.5f}'.format(
@@ -339,7 +334,7 @@ def main():
         model = load_checkpoint(os.path.join(args.save_dir, 'model.pt'), cuda=args.cuda, logger=logger)
 
     roc_score, ap_score, f1_score, acc_score = get_roc_score(
-        model, features, adj_norm, adj_orig, adj_tensor, drug_nums, test_edges, test_edges_false, test = True
+        model, features, adj_norm, adj_tensor, drug_nums, test_edges, test_edges_false, test = True
     )
     logger.info('Test ROC score: {:.5f}'.format(roc_score))
     logger.info('Test AP score: {:.5f}'.format(ap_score))
