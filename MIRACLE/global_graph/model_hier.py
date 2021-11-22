@@ -119,4 +119,4 @@ class HierGlobalGCN(nn.Module):
         DGI_loss = self.DGI_model(embeddings, local_embed, adj_tensor, drug_nums)
         if return_embeddings:
             return outputs_, embeddings
-        return outputs_g, feat_orig, embeddings, outputs_l, outputs_g, DGI_loss
+        return outputs_g, outputs_l, DGI_loss

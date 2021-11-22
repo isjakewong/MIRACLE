@@ -8,13 +8,9 @@ from utils import gen_preds, eval_threshold
 def get_roc_score(model,
                   features, 
                   adj: torch.sparse.FloatTensor,
-                  adj_orig: sp.csr_matrix,
                   adj_tensor, 
                   drug_nums,
                   edges_pos: np.ndarray, edges_neg: Union[np.ndarray, List[list]], test = None) -> Tuple[float, float]:
-    def sigmoid(x):
-        return 1 / (1 + np.exp(-x))
-
     model.eval()
 
     rec, emb = model(features, adj, adj_tensor, drug_nums, return_embeddings = True)
