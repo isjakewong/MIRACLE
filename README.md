@@ -16,9 +16,10 @@ scikit_learn==0.23.2
 Cite:
 ```
 @inproceedings{wang2021multi,
-  title={Multi-view Graph Contrastive Representation Learning for Drug-drug Interaction Prediction},
+  title={Multi-view Graph Contrastive Representation Learning for Drug-Drug Interaction Prediction},
   author={Wang, Yingheng and Min, Yaosen and Chen, Xin and Wu, Ji},
-  booktitle={The World Wide Web Conference},
+  booktitle={Proceedings of the Web Conference 2021},
+  pages={2921--2933},
   year={2021}
 }
 
